@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -83,12 +84,14 @@ namespace Snake
 			_food.x = _rand.Next(Width - 2) + 1;
 			_food.y = _rand.Next(Height - 2) + 1;
 
+			var buffers = new Buffer[2];
+			for (int i = 0; i < 2; i++) {
+				buffers[i] = new Buffer();
+			}
+			var curBuffer = 0;
+
 			// main game loop
 			while (_playing) {
-				// Clear food and snake from the console
-				ClearFood(_food);
-				_snake.Clear();
-
 				// Move the snake one unit in the direction it is facing
 				_snake.Move(_direction);
 
@@ -108,10 +111,23 @@ namespace Snake
 					// ...end the game
 					_playing = false;
 				} else {
-					// Redraw food and snake to the console
-					DrawFood(_food);
-					_snake.Draw();
+					// Draw the current scene to the current buffer
+					try {
+						buffers[curBuffer].AddIcon(_food.x, _food.y, '$');
+					} catch (Exception e) {
+						Console.Write(curBuffer);
+					}
+					_snake.Draw(buffers[curBuffer]);
+
+					// Clear the old buffer from the screen
+					buffers[(curBuffer + 1) % 2].Clear();
+
+					// Render the current buffer to the console
+					buffers[curBuffer].Draw();
 				}
+
+				// Cycle the current buffer
+				curBuffer = (curBuffer + 1) % 2;
 
 				// Sleep until the next frame
 				Thread.Sleep(GameSpeed);
