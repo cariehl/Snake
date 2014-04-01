@@ -9,8 +9,10 @@ namespace Snake
 {
 	interface IBufferable
 	{
-		void Draw(string[,] buffer);
+		// draws this object to the console
+		void Draw();
 
-		void Clear(string[,] buffer);
+		// clears this object from the console
+		void Clear();
 	}
 }

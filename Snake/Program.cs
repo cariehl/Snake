@@ -18,8 +18,9 @@ namespace Snake
 		static SnakeDirection _direction = SnakeDirection.Right;
 		static bool _playing = true;
 		const int GameSpeed = 100;
-		static string[][,] _buffers = new string[2][,];
-		static int _curBuffer = 0;
+		static Snake _snake = new Snake(10, 10);
+		static Food _food;
+		static Random _rand = new Random();
 
 		public enum SnakeDirection
 		{
@@ -35,80 +36,89 @@ namespace Snake
 			public int y;
 		};
 
-		static void Buffer(Snake snake, Food food, string[,] buffer)
+		// container method to draw the food on the screen
+		// replace this when Food becomes a separate class
+		static void DrawFood(Food food)
 		{
-			// Buffer Borders
-			for (var row = 0; row < Height; row++) {
-				for (var col = 0; col < Width; col++) {
-					if (row == 0 || row == Height - 1 || col == 0 || col == Width - 1) {
-						buffer[col, row] = "#";
-					}
-				}
+			Console.SetCursorPosition(food.x, food.y);
+			Console.Write("$");
+		}
+
+		// container method to clear food from the screen
+		// replace this when Food becomes a separate class
+		static void ClearFood(Food food)
+		{
+			Console.SetCursorPosition(food.x, food.y);
+			Console.Write(" ");
+		}
+
+		// method to draw static objects on the screen before the game starts
+		// these include barriers and walls
+		static void PreRender()
+		{
+			// draw the upper wall
+			Console.SetCursorPosition(0, 0);
+			for (var i = 0; i < Width; i++) {
+				Console.Write("#");
 			}
 
-			// Buffer Snake
-			snake.Draw(buffer);
+			// draw the left and right walls
+			for (var i = 1; i < Height - 1; i++) {
+				Console.SetCursorPosition(0, i);
+				Console.Write("#");
+				Console.SetCursorPosition(Width - 1, i);
+				Console.Write("#");
+			}
 
-			// Buffer Food
-			buffer[food.x, food.y] = "$";
-		}
-
-		static void Clear(Snake snake, Food food, string[,] buffer)
-		{
-			// Clear Snake
-			snake.Clear(buffer);
-
-			// Clear Food
-			buffer[food.x, food.y] = " ";
-		}
-
-		static void InitializeBuffer(string[,] buffer)
-		{
-			// Fill with blank spaces
-			for (var row = 0; row < Height; row++) {
-				for (var col = 0; col < Width; col++) {
-					buffer[col, row] = " ";
-				}
+			// draw the bottom wall
+			Console.SetCursorPosition(0, Height - 1);
+			for (var i = 0; i < Width; i++) {
+				Console.Write("#");
 			}
 		}
 
+		// main game loop
 		static void GameLoop()
 		{
-			var rand = new Random();
-
-			for (var i = 0; i < 2; i++) {
-				_buffers[i] = new string[Width, Height];
-				InitializeBuffer(_buffers[i]);
-			}
-
-			var snake = new Snake(10, 10);
-			Food food;
-
-			food.x = rand.Next(Width - 2) + 1;
-			food.y = rand.Next(Height - 2) + 1;
+			_food.x = _rand.Next(Width - 2) + 1;
+			_food.y = _rand.Next(Height - 2) + 1;
 
 			// main game loop
 			while (_playing) {
-				Clear(snake, food, _buffers[_curBuffer]);
-				_curBuffer = (_curBuffer + 1) % 2;
+				// Clear food and snake from the console
+				ClearFood(_food);
+				_snake.Clear();
 
-				snake.Move(_direction);
+				// Move the snake one unit in the direction it is facing
+				_snake.Move(_direction);
 
-				if (snake.DetectFood(food)) {
-					snake.AddSegment();
-					food.x = rand.Next(Width - 2) + 1;
-					food.y = rand.Next(Height - 2) + 1;
+				// If the snake runs over a food piece...
+				if (_snake.DetectFood(_food)) {
+
+					// ...add a new segment...
+					_snake.AddSegment();
+
+					// ...and move the food to a new position
+					_food.x = _rand.Next(Width - 2) + 1;
+					_food.y = _rand.Next(Height - 2) + 1;
 				}
 
-				if (snake.DetectCollision()) {
+				// If the snake runs into a wall...
+				if (_snake.DetectCollision()) {
+					// ...end the game
 					_playing = false;
 				} else {
-					Buffer(snake, food, _buffers[_curBuffer]);
+					// Redraw food and snake to the console
+					DrawFood(_food);
+					_snake.Draw();
 				}
+
+				// Sleep until the next frame
 				Thread.Sleep(GameSpeed);
 			}
 		}
 
+		// asynchronous user input loop
 		static void GetUserInput()
 		{
 			while (true) {
@@ -131,39 +141,28 @@ namespace Snake
 			}
 		}
 
-		static void Render()
-		{
-			while (_playing) {
-				// Write to console
-				for (var i = 0; i < Height; i++) {
-					Console.SetCursorPosition(0, i);
-					for (var j = 0; j < Width; j++) {
-						Console.Write(_buffers[_curBuffer][j, i]);
-					}
-				}
-			}
-			Console.SetCursorPosition(0, Height);
-			Console.Write("\bYou are a loser!");
-		}
-
+		// game start function
 		static void Main(string[] args)
 		{
+			// initialize all our threads
 			var gameLoop = new Thread(new ThreadStart(GameLoop));
-			var userInput = new Thread(new ThreadStart(GetUserInput));
-			var renderLoop = new Thread(new ThreadStart(Render));
+			var userInputLoop = new Thread(new ThreadStart(GetUserInput));
+			
+			// draw static objects including walls and barriers
+			PreRender();
 
+			// start the threads
 			gameLoop.Start();
-			userInput.Start();
-			renderLoop.Start();
+			userInputLoop.Start();
 
-			while (_playing) {
-				userInput.Join(GameSpeed);
-				gameLoop.Join();
-				renderLoop.Join();
-			}
-			userInput.Abort();
-			gameLoop.Abort();
-			renderLoop.Abort();
+			// wait for the game loop to end
+			gameLoop.Join();
+			userInputLoop.Abort();
+
+			Console.SetCursorPosition(0, Height);
+			Console.Write("\bYou are a loser!");
+
+			Console.ReadKey();
 		}
 	}
 }

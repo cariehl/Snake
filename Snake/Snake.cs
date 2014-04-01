@@ -120,18 +120,20 @@ namespace Snake
 		}
 
 		// Draws this Snake onto the specified buffer
-		public void Draw(string[,] buffer)
+		public void Draw()
 		{
 			foreach (var seg in _segments) {
-				buffer[seg.X, seg.Y] = "@";
+				Console.SetCursorPosition(seg.X, seg.Y);
+				Console.Write("@");
 			}
 		}
 
 		// Clear this Snake from the specified buffer
-		public void Clear(string[,] buffer)
+		public void Clear()
 		{
 			foreach (var seg in _segments) {
-				buffer[seg.X, seg.Y] = " ";
+				Console.SetCursorPosition(seg.X, seg.Y);
+				Console.Write(" ");
 			}
 		}
 
