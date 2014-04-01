@@ -15,9 +15,11 @@ namespace Snake
 	static class Program
 	{
 		public const int Width = 80, Height = 24;
-		static private SnakeDirection _direction = SnakeDirection.Right;
-		private static bool _playing = true;
-		private const int GameSpeed = 40;
+		static SnakeDirection _direction = SnakeDirection.Right;
+		static bool _playing = true;
+		const int GameSpeed = 100;
+		static string[][,] _buffers = new string[2][,];
+		static int _curBuffer = 0;
 
 		public enum SnakeDirection
 		{
@@ -73,12 +75,10 @@ namespace Snake
 		static void GameLoop()
 		{
 			var rand = new Random();
-			var curBuffer = 0;
-			var buffers = new string[2][,];
 
 			for (var i = 0; i < 2; i++) {
-				buffers[i] = new string[Width, Height];
-				InitializeBuffer(buffers[i]);
+				_buffers[i] = new string[Width, Height];
+				InitializeBuffer(_buffers[i]);
 			}
 
 			var snake = new Snake(10, 10);
@@ -89,8 +89,8 @@ namespace Snake
 
 			// main game loop
 			while (_playing) {
-				Clear(snake, food, buffers[curBuffer]);
-				curBuffer = (curBuffer + 1) % 2;
+				Clear(snake, food, _buffers[_curBuffer]);
+				_curBuffer = (_curBuffer + 1) % 2;
 
 				snake.Move(_direction);
 
@@ -102,17 +102,8 @@ namespace Snake
 
 				if (snake.DetectCollision()) {
 					_playing = false;
-					Console.Write("\bYou are a loser!");
 				} else {
-					Buffer(snake, food, buffers[curBuffer]);
-
-					// Write to console
-					for (var i = 0; i < Height; i++) {
-						Console.SetCursorPosition(0, i);
-						for (var j = 0; j < Width; j++) {
-							Console.Write(buffers[curBuffer][j, i]);
-						}
-					}
+					Buffer(snake, food, _buffers[_curBuffer]);
 				}
 				Thread.Sleep(GameSpeed);
 			}
@@ -140,19 +131,39 @@ namespace Snake
 			}
 		}
 
+		static void Render()
+		{
+			while (_playing) {
+				// Write to console
+				for (var i = 0; i < Height; i++) {
+					Console.SetCursorPosition(0, i);
+					for (var j = 0; j < Width; j++) {
+						Console.Write(_buffers[_curBuffer][j, i]);
+					}
+				}
+			}
+			Console.SetCursorPosition(0, Height);
+			Console.Write("\bYou are a loser!");
+		}
+
 		static void Main(string[] args)
 		{
 			var gameLoop = new Thread(new ThreadStart(GameLoop));
 			var userInput = new Thread(new ThreadStart(GetUserInput));
+			var renderLoop = new Thread(new ThreadStart(Render));
+
 			gameLoop.Start();
 			userInput.Start();
+			renderLoop.Start();
 
 			while (_playing) {
 				userInput.Join(GameSpeed);
 				gameLoop.Join();
+				renderLoop.Join();
 			}
 			userInput.Abort();
 			gameLoop.Abort();
+			renderLoop.Abort();
 		}
 	}
 }
