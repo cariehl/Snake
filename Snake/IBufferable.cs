@@ -7,9 +7,10 @@ using System.Threading.Tasks;
 
 namespace Snake
 {
+	// An object that is able to be drawn to a buffer
 	interface IBufferable
 	{
-		// draws this object to the console
+		// Draws this object to the given buffer
 		void Draw(Buffer buffer);
 	}
 }

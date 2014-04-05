@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 
 namespace Snake
 {
+	// An icon to be drawn on the screen at position (x, y)
+	// Character keeps track of the ASCII character to be drawn
 	internal struct Icon
 	{
 		public int X;
@@ -13,13 +15,16 @@ namespace Snake
 		public char Character;
 	};
 
+	// A buffer to hold objects to be drawn on the screen
 	class Buffer
 	{
+		// A list of icons to draw to the screen
 		private List<Icon> _icons;
 
+		// Public constructor
 		public Buffer()
 		{
-			// initializes the icons array to potentially contain each interior tile of the game board
+			// initializes the icons list
 			this._icons = new List<Icon>();
 		}
 
@@ -29,24 +34,26 @@ namespace Snake
 			_icons.Add(new Icon(){X = newX, Y = newY, Character = newCharacter});
 		}
 
-		public void Draw()
+		// Renders this buffer to the console
+		public void Render()
 		{
-			// Render the buffer to the console
+			// Write each icon in the correct position on the console
 			foreach (var icon in _icons) {
 				Console.SetCursorPosition(icon.X, icon.Y);
 				Console.Write(icon.Character);
 			}
 		}
 
+		// Clears this buffer from the console
 		public void Clear()
 		{
-			// Clear the buffer from the console
+			// Rewrite each icon as a space (which is the background icon)
 			foreach (var icon in _icons) {
 				Console.SetCursorPosition(icon.X, icon.Y);
 				Console.Write(" ");
 			}
 
-			// Remove all elements from the buffer so we can start fresh on the next frame
+			// Remove all elements from this buffer so we can start fresh on the next frame
 			_icons.Clear();
 		}
 	}

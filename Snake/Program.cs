@@ -13,16 +13,31 @@ using Timer = System.Timers.Timer;
 
 namespace Snake
 {
+	// Let's play some Snake!
 	static class Program
 	{
+		// Console width and height
 		public const int Width = 80, Height = 24;
+
+		// Direction of the snake, starts off moving to the right
 		static SnakeDirection _direction = SnakeDirection.Right;
+
+		// Is the game still going?
 		static bool _playing = true;
+
+		// Speed of the game (wait time in ms between frames)
 		const int GameSpeed = 100;
+
+		// The snake
 		static Snake _snake = new Snake(10, 10);
+
+		// The food object
 		static Food _food;
+
+		// Random number generator
 		static Random _rand = new Random();
 
+		// Keeps track of the direction the snake is moving
 		public enum SnakeDirection
 		{
 			Up,
@@ -31,6 +46,7 @@ namespace Snake
 			Right,
 		};
 
+		// Keeps track of the position of the food object
 		public struct Food
 		{
 			public int x;
@@ -81,17 +97,24 @@ namespace Snake
 		// main game loop
 		static void GameLoop()
 		{
+			// Initialize the food position
 			_food.x = _rand.Next(Width - 2) + 1;
 			_food.y = _rand.Next(Height - 2) + 1;
 
+			// Initialize two screen buffers
 			var buffers = new Buffer[2];
 			for (int i = 0; i < 2; i++) {
 				buffers[i] = new Buffer();
 			}
 			var curBuffer = 0;
 
-			// main game loop
+			// Game logic loop
+			// This runs continuously while the game is going on
 			while (_playing) {
+				// Keep track of time used in game logic
+				var timer =  new Stopwatch();
+				timer.Start();
+
 				// Move the snake one unit in the direction it is facing
 				_snake.Move(_direction);
 
@@ -108,10 +131,11 @@ namespace Snake
 
 				// If the snake runs into a wall...
 				if (_snake.DetectCollision()) {
+
 					// ...end the game
 					_playing = false;
 				} else {
-					// Draw the current scene to the current buffer
+					// Draw the scene to the current buffer
 					try {
 						buffers[curBuffer].AddIcon(_food.x, _food.y, '$');
 					} catch (Exception e) {
@@ -123,14 +147,18 @@ namespace Snake
 					buffers[(curBuffer + 1) % 2].Clear();
 
 					// Render the current buffer to the console
-					buffers[curBuffer].Draw();
+					buffers[curBuffer].Render();
 				}
 
 				// Cycle the current buffer
 				curBuffer = (curBuffer + 1) % 2;
 
+				// Stop the timer and get the elapsed time in ms
+				timer.Stop();
+				var elapsedTime = (int)timer.Elapsed.TotalMilliseconds;
+
 				// Sleep until the next frame
-				Thread.Sleep(GameSpeed);
+				Thread.Sleep(GameSpeed - elapsedTime);
 			}
 		}
 
@@ -138,8 +166,10 @@ namespace Snake
 		static void GetUserInput()
 		{
 			while (true) {
+				// Read a key from the console
 				var key = Console.ReadKey().Key;
 
+				// Set the snake's direction based on which arrow key was pressed
 				switch (key) {
 					case ConsoleKey.UpArrow:
 						_direction = SnakeDirection.Up;
@@ -173,11 +203,15 @@ namespace Snake
 
 			// wait for the game loop to end
 			gameLoop.Join();
+
+			// Stop the user input loop
 			userInputLoop.Abort();
 
+			// Print the ending message
 			Console.SetCursorPosition(0, Height);
 			Console.Write("\bYou are a loser!");
 
+			// Wait for the user to quit
 			Console.ReadKey();
 		}
 	}
