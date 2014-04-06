@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="Barrier.cs" />
     <Compile Include="Buffer.cs" />
+    <Compile Include="Food.cs" />
     <Compile Include="IBufferable.cs" />
     <Compile Include="Snake.cs" />
     <Compile Include="Program.cs" />

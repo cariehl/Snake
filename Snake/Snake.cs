@@ -142,13 +142,19 @@ namespace Snake
 		}
 
 		// Returns true if this snake is colliding with the given food object
-		public bool DetectFood(Program.Food food)
+		public bool DetectFood(Food food)
 		{
 			// Find the position of the head
 			var head = _segments.Find(x => x.Id == 1);
 
 			// Return true if the head is occupying the same space as the food
-			return head.X == food.x && head.Y == food.y;
+			return food.ExistsAtPoint(head.X, head.Y);
+		}
+
+		// Returns true if a snake segment exists at the given coords
+		public bool ExistsAtPoint(int x, int y)
+		{
+			return _segments.Any(seg => seg.X == x && seg.Y == y);
 		}
 
 		// Draws this Snake onto the specified buffer

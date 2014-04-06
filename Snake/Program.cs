@@ -21,7 +21,10 @@ namespace Snake
 		private const int Width = 80, Height = 24;
 
 		// The number of barriers to generate for the game (excluding the walls)
-		private const int NumBarriers = 3;
+		private const int NumBarriers = 5;
+
+		// The maximum number of barrier segments for each barrier (excluding the walls)
+		private const int MaxBarrierSegments = 10;
 
 		// Direction of the snake, starts off moving to the right
 		static SnakeDirection _direction = SnakeDirection.Right;
@@ -36,7 +39,7 @@ namespace Snake
 		static Snake _snake = new Snake(10, 10);
 
 		// The food object
-		static Food _food;
+		static Food _food = new Food();
 
 		// List of barriers in the game
 		static List<Barrier> _barriers = new List<Barrier>();
@@ -53,27 +56,21 @@ namespace Snake
 			Right,
 		};
 
-		// Keeps track of the position of the food object
-		public struct Food
+		// Moves the food to a new position, taking into account other objects on the screen
+		static void SetFoodPos()
 		{
-			public int x;
-			public int y;
-		};
+			int randX;
+			int randY;
 
-		// container method to draw the food on the screen
-		// replace this when Food becomes a separate class
-		static void DrawFood(Food food)
-		{
-			Console.SetCursorPosition(food.x, food.y);
-			Console.Write("$");
-		}
+			// Get random coordinates until we find one that is not occupied already
+			do {
+				randX = _rand.Next(Width - 2) + 1;
+				randY = _rand.Next(Height - 2) + 1;
+			} while (_barriers.Exists(bar => bar.CollisionAtPoint(randX, randY)) ||
+			         _snake.ExistsAtPoint(randX, randY));
 
-		// container method to clear food from the screen
-		// replace this when Food becomes a separate class
-		static void ClearFood(Food food)
-		{
-			Console.SetCursorPosition(food.x, food.y);
-			Console.Write(" ");
+			// Set the food's position to the found coordinates
+			_food.SetPosition(randX, randY);
 		}
 
 		// Adds the four walls to the list of barriers, as well as "NumBarriers"
@@ -112,8 +109,8 @@ namespace Snake
 			for (var i = 0; i < NumBarriers; i++) {
 				var thisBarrier = new Barrier();
 
-				// Each barrier has a number of segments between 3 and 9
-				var thisNumSegments = _rand.Next(3, 10);
+				// Each barrier has a number of segments between 3 and maximum
+				var thisNumSegments = _rand.Next(3, MaxBarrierSegments + 1);
 
 				// Generate a starting point for the barrier
 				var startX = _rand.Next(1, Width - 2);
@@ -165,13 +162,12 @@ namespace Snake
 		// main game loop
 		static void GameLoop()
 		{
-			// Initialize the food position
-			_food.x = _rand.Next(Width - 2) + 1;
-			_food.y = _rand.Next(Height - 2) + 1;
+			// Initialize the food position to a random position
+			SetFoodPos();
 
 			// Initialize two screen buffers
 			var buffers = new Buffer[2];
-			for (int i = 0; i < 2; i++) {
+			for (var i = 0; i < 2; i++) {
 				buffers[i] = new Buffer();
 			}
 
@@ -194,8 +190,7 @@ namespace Snake
 					_snake.AddSegment();
 
 					// ...and move the food to a new position
-					_food.x = _rand.Next(Width - 2) + 1;
-					_food.y = _rand.Next(Height - 2) + 1;
+					SetFoodPos();
 				}
 
 				// If the snake runs into a wall...
@@ -204,11 +199,7 @@ namespace Snake
 					_playing = false;
 				} else {
 					// Draw the scene to the current buffer
-					try {
-						buffers[curBuffer].AddIcon(_food.x, _food.y, '$');
-					} catch (Exception e) {
-						Console.Write(curBuffer);
-					}
+					_food.Draw(buffers[curBuffer]);
 					_snake.Draw(buffers[curBuffer]);
 
 					// Clear the old buffer from the screen
