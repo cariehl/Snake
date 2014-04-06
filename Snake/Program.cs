@@ -56,6 +56,31 @@ namespace Snake
 			Right,
 		};
 
+		// Prints the title screen to the console
+		static void PrintTitle()
+		{
+			Console.SetCursorPosition(27, 7);
+			Console.Write("*~* WormSnake *~*");
+
+			Console.SetCursorPosition(28, 9);
+			Console.Write("by Cooper Riehl");
+
+			Console.SetCursorPosition(29, 11);
+			Console.Write("Instructions:");
+
+			Console.SetCursorPosition(24, 13);
+			Console.Write("You are the WormSnake  @");
+
+			Console.SetCursorPosition(24, 14);
+			Console.Write("Collect the Food       $");
+
+			Console.SetCursorPosition(24, 15);
+			Console.Write("Avoid the Walls        #");
+
+			Console.SetCursorPosition(22, 17);
+			Console.Write("Press any key to continue...");
+		}
+
 		// Moves the food to a new position, taking into account other objects on the screen
 		static void SetFoodPos()
 		{
@@ -249,6 +274,13 @@ namespace Snake
 		// game start function
 		static void Main(string[] args)
 		{
+			// Show the title screen
+			PrintTitle();
+			Console.ReadKey();
+
+			// Clear the title
+			Console.Clear();
+
 			// initialize all our threads
 			var gameLoop = new Thread(new ThreadStart(GameLoop));
 			var userInputLoop = new Thread(new ThreadStart(GetUserInput));
