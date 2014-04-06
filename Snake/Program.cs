@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Remoting.Messaging;
@@ -19,6 +20,9 @@ namespace Snake
 		// Console width and height
 		public const int Width = 80, Height = 24;
 
+		// The number of barriers to generate for the game (excluding the walls)
+		private const int NumBarriers = 3;
+
 		// Direction of the snake, starts off moving to the right
 		static SnakeDirection _direction = SnakeDirection.Right;
 
@@ -33,6 +37,9 @@ namespace Snake
 
 		// The food object
 		static Food _food;
+
+		// List of barriers in the game
+		static List<Barrier> _barriers = new List<Barrier>();
 
 		// Random number generator
 		static Random _rand = new Random();
@@ -69,28 +76,89 @@ namespace Snake
 			Console.Write(" ");
 		}
 
+		// Adds the four walls to the list of barriers, as well as "NumBarriers"
+		// randomized barriers somewhere in the game bounds
+		static void CreateRandomBarriers()
+		{
+			// Generate top wall
+			var topWall = new Barrier();
+			for (var i = 0; i < Width; i++) {
+				topWall.AddSegment(i, 0);
+			}
+			_barriers.Add(topWall);
+
+			// Generate bottom wall
+			var bottomWall = new Barrier();
+			for (var i = 0; i < Width; i++) {
+				bottomWall.AddSegment(i, Height - 1);
+			}
+			_barriers.Add(bottomWall);
+
+			// Generate left wall
+			var leftWall = new Barrier();
+			for (var i = 0; i < Height; i++) {
+				leftWall.AddSegment(0, i);
+			}
+			_barriers.Add(leftWall);
+
+			// Generate right wall
+			var rightWall = new Barrier();
+			for (var i = 0; i < Height; i++) {
+				rightWall.AddSegment(Width - 1, i);
+			}
+			_barriers.Add(rightWall);
+
+			// Generate "NumBarriers" random barriers
+			for (var i = 0; i < NumBarriers; i++) {
+				var thisBarrier = new Barrier();
+
+				// Each barrier has a number of segments between 3 and 9
+				var thisNumSegments = _rand.Next(3, 10);
+
+				// Generate a starting point for the barrier
+				var startX = _rand.Next(1, Width - 2);
+				var startY = _rand.Next(1, Height - 2);
+
+				// Add a segment at the starting point
+				thisBarrier.AddSegment(startX, startY);
+
+				// Generate "thisNumSegments" where each segment is touching
+				// one of the existing segments
+				for (var j = 0; j < thisNumSegments - 1; j++) {
+					int randX, randY;
+
+					// Keep generating points until we get one that doesn't conflict with
+					// an existing segment
+					do {
+						// Get a random segment from the current barrier (starts with the starting point)
+						// where coords[0] = x and coords[1] = y
+						var coords = thisBarrier.GetRandomSegment(_rand);
+
+						// Get a random number -1 to 1
+						randX = _rand.Next(3) - 1;
+						randY = _rand.Next(3) - 1;
+
+						// Add that random number to each of the base coords
+						randX += coords[0];
+						randY += coords[1];
+					} while (_barriers.Any(bar => bar.CollisionAtPoint(randX, randY)));
+					
+
+					// Add a new segment at the generated point
+					thisBarrier.AddSegment(randX, randY);
+				}
+
+				// Finally add our new barrier to the list of barriers
+				_barriers.Add(thisBarrier);
+			}
+		}
+
 		// method to draw static objects on the screen before the game starts
 		// these include barriers and walls
 		static void PreRender()
 		{
-			// draw the upper wall
-			Console.SetCursorPosition(0, 0);
-			for (var i = 0; i < Width; i++) {
-				Console.Write("#");
-			}
-
-			// draw the left and right walls
-			for (var i = 1; i < Height - 1; i++) {
-				Console.SetCursorPosition(0, i);
-				Console.Write("#");
-				Console.SetCursorPosition(Width - 1, i);
-				Console.Write("#");
-			}
-
-			// draw the bottom wall
-			Console.SetCursorPosition(0, Height - 1);
-			for (var i = 0; i < Width; i++) {
-				Console.Write("#");
+			foreach (var bar in _barriers) {
+				bar.Render();
 			}
 		}
 
@@ -106,6 +174,8 @@ namespace Snake
 			for (int i = 0; i < 2; i++) {
 				buffers[i] = new Buffer();
 			}
+
+			// ...and set the current buffer to the first one
 			var curBuffer = 0;
 
 			// Game logic loop
@@ -120,7 +190,6 @@ namespace Snake
 
 				// If the snake runs over a food piece...
 				if (_snake.DetectFood(_food)) {
-
 					// ...add a new segment...
 					_snake.AddSegment();
 
@@ -130,8 +199,7 @@ namespace Snake
 				}
 
 				// If the snake runs into a wall...
-				if (_snake.DetectCollision()) {
-
+				if (_snake.DetectCollision(_barriers)) {
 					// ...end the game
 					_playing = false;
 				} else {
@@ -194,6 +262,9 @@ namespace Snake
 			var gameLoop = new Thread(new ThreadStart(GameLoop));
 			var userInputLoop = new Thread(new ThreadStart(GetUserInput));
 			
+			// Create walls and barriers for the game
+			CreateRandomBarriers();
+
 			// draw static objects including walls and barriers
 			PreRender();
 

@@ -10,7 +10,7 @@ namespace Snake
 	// A snake that moves across the screen and is controlled by the player.
 	class Snake : IBufferable
 	{
-		// A struct contianing information about one of the snake's parts
+		// A struct containing information about one of the snake's parts
 		// Each segment is a single "@" in the console
 		private struct Segment
 		{
@@ -21,12 +21,15 @@ namespace Snake
 		};
 		
 		// List of all the segments that are part of our snake
-		private List<Segment> _segments =  new List<Segment>();
+		private List<Segment> _segments;
 
 		// Public constructor
 		public Snake(int startX, int startY)
 		{
-			// Initialize the snake "head" as the first segment
+			// Initialize our list of segments
+			_segments = new List<Segment>();
+
+			// Creates the "head" of the snake (first segment)
 			this._segments.Add(new Segment(){X = startX, Y = startY, Id = 1, Direction = Program.SnakeDirection.Right});
 		}
 
@@ -123,20 +126,19 @@ namespace Snake
 		}
 
 		// Returns true if this snake is colliding with a barrier object or wall
-		public bool DetectCollision()
+		public bool DetectCollision(IEnumerable<Barrier> barriers)
 		{
 			// Find the position of the head
 			var head = _segments.Find(x => x.Id == 1);
 
 			// First check to see if this snake is colliding with one of its own segments
-			if (this._segments.Any(seg => head.X == seg.X && head.Y == seg.Y && head.Id != seg.Id)) {
+			if (_segments.Any(seg => head.X == seg.X && head.Y == seg.Y && head.Id != seg.Id)) {
 				return true;
 			}
 
 			// Then check to see if we are on a wall
 			// TODO: Change this from "magic numbers" to use information from the caller
-			return head.Y == 0 || head.Y == Program.Height - 1 || head.X == 0 ||
-			       head.X == Program.Width - 1;
+			return barriers.Any(bar => bar.CollisionAtPoint(head.X, head.Y));
 		}
 
 		// Returns true if this snake is colliding with the given food object
