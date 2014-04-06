@@ -18,7 +18,7 @@ namespace Snake
 	static class Program
 	{
 		// Console width and height
-		public const int Width = 80, Height = 24;
+		private const int Width = 80, Height = 24;
 
 		// The number of barriers to generate for the game (excluding the walls)
 		private const int NumBarriers = 3;
