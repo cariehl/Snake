@@ -86,13 +86,23 @@ namespace Snake
 		{
 			int randX;
 			int randY;
+			int barCount = 0;
 
 			// Get random coordinates until we find one that is not occupied already
+			// OR where the food is surrounded on 3 or more sides by barriers
 			do {
 				randX = _rand.Next(Width - 2) + 1;
 				randY = _rand.Next(Height - 2) + 1;
+				// Count the number of barriers surrounding the food object
+				barCount =
+					_barriers.FindAll(bar => bar.CollisionAtPoint(randX + 1, randY) ||
+					                         bar.CollisionAtPoint(randX - 1, randY) ||
+					                         bar.CollisionAtPoint(randX, randY + 1) ||
+					                         bar.CollisionAtPoint(randX, randY - 1))
+											 .Count;
 			} while (_barriers.Exists(bar => bar.CollisionAtPoint(randX, randY)) ||
-			         _snake.ExistsAtPoint(randX, randY));
+			         _snake.ExistsAtPoint(randX, randY) ||
+					 barCount >= 3);
 
 			// Set the food's position to the found coordinates
 			_food.SetPosition(randX, randY);
