@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Snake
 {
 	// A piece of food that extends the length of the snake when eaten
-	class Food : IBufferable
+	class Food
 	{
 		// Keeps track of the position of the food object
 		private struct FoodObj
@@ -32,18 +32,15 @@ namespace Snake
 		{
 			_food.X = x;
 			_food.Y = y;
+
+			Console.SetCursorPosition(x, y);
+			Console.Write('$');
 		}
 
 		// Returns true if this food object exists at the given point
 		public bool ExistsAtPoint(int x, int y)
 		{
 			return _food.X == x && _food.Y == y;
-		}
-
-		// Draws this piece of food onto the specified buffer
-		public void Draw(Buffer buffer)
-		{
-			buffer.AddIcon(_food.X, _food.Y, '$');
 		}
 	}
 }

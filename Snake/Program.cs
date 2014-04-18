@@ -200,15 +200,6 @@ namespace Snake
 			// Initialize the food position to a random position
 			SetFoodPos();
 
-			// Initialize two screen buffers
-			var buffers = new Buffer[2];
-			for (var i = 0; i < 2; i++) {
-				buffers[i] = new Buffer();
-			}
-
-			// ...and set the current buffer to the first one
-			var curBuffer = 0;
-
 			// Game logic loop
 			// This runs continuously while the game is going on
 			while (_playing) {
@@ -232,27 +223,14 @@ namespace Snake
 				if (_snake.DetectCollision(_barriers)) {
 					// ...end the game
 					_playing = false;
-				} else {
-					// Draw the scene to the current buffer
-					_food.Draw(buffers[curBuffer]);
-					_snake.Draw(buffers[curBuffer]);
-
-					// Clear the old buffer from the screen
-					buffers[(curBuffer + 1) % 2].Clear();
-
-					// Render the current buffer to the console
-					buffers[curBuffer].Render();
 				}
-
-				// Cycle the current buffer
-				curBuffer = (curBuffer + 1) % 2;
 
 				// Stop the timer and get the elapsed time in ms
 				timer.Stop();
 				var elapsedTime = (int)timer.Elapsed.TotalMilliseconds;
 
 				// Sleep until the next frame
-				Thread.Sleep(GameSpeed - elapsedTime);
+				Thread.Sleep(GameSpeed - elapsedTime > 0 ? GameSpeed - elapsedTime : 0);
 			}
 		}
 
@@ -261,7 +239,7 @@ namespace Snake
 		{
 			while (true) {
 				// Read a key from the console
-				var key = Console.ReadKey().Key;
+				var key = Console.ReadKey(true).Key;
 
 				// Set the snake's direction based on which arrow key was pressed
 				switch (key) {

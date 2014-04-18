@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Snake
 {
 	// A snake that moves across the screen and is controlled by the player.
-	class Snake : IBufferable
+	class Snake
 	{
 		// A struct containing information about one of the snake's parts
 		// Each segment is a single "@" in the console
@@ -76,6 +76,8 @@ namespace Snake
 
 			// Offset one segment in front of the head based on its direction
 			// i.e if the head is moving down, we want the new segment to be one unit below the head
+			// Overrides any attempts to move in the opposite direction
+			// i.e if the snake is moving up and the player tries to move down, the snake will continue moving up
 			switch (direction) {
 				case Program.SnakeDirection.Left:
 					if (head.Direction == Program.SnakeDirection.Right) {
@@ -107,21 +109,27 @@ namespace Snake
 					break;
 			}
 
+			// Clear the tail from the console
+			var toClear = _segments.Find(x => x.Id == _segments.Count);
+			Console.SetCursorPosition(toClear.X, toClear.Y);
+			Console.Write(' ');
+
 			// Remove the tail of the snake
 			_segments.RemoveAt(_segments.FindIndex(x => x.Id == _segments.Count));
 
 			// Add a new segment one unit in front of the head
 			_segments.Add(new Segment(){X = xnew, Y = ynew, Direction = direction, Id = 0});
 
+			// Write the new segment to the console
+			Console.SetCursorPosition(xnew, ynew);
+			Console.Write('@');
+
 			// Increment each segment's ID by one
 			// There is probably a better way to do this...
 			for (var i = 0; i < _segments.Count; i++) {
-				_segments[i] = new Segment() {
-					X = _segments[i].X,
-					Y = _segments[i].Y,
-					Direction = _segments[i].Direction,
-					Id = _segments[i].Id + 1
-				};
+				var seg = _segments[i];
+				seg.Id++;
+				_segments[i] = seg;
 			}
 		}
 
@@ -155,15 +163,6 @@ namespace Snake
 		public bool ExistsAtPoint(int x, int y)
 		{
 			return _segments.Any(seg => seg.X == x && seg.Y == y);
-		}
-
-		// Draws this Snake onto the specified buffer
-		public void Draw(Buffer buffer)
-		{
-			// Add all the segments to the buffer as "@" icons
-			foreach (var seg in _segments) {
-				buffer.AddIcon(seg.X, seg.Y, '@');
-			}
 		}
 
 		// Returns the number of segments in the snake
