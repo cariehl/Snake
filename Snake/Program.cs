@@ -90,7 +90,6 @@ namespace Snake
 
 			// Get random coordinates until we find one that is NOT occupied already
 			// AND where the food is NOT surrounded on 3 or more sides by barriers
-			// AND where the barrier is NOT within the first 10 spaces of the snake
 			do {
 				randX = _rand.Next(Width - 2) + 1;
 				randY = _rand.Next(Height - 2) + 1;
