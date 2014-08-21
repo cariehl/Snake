@@ -23,6 +23,10 @@ namespace Snake
 		// List of all the segments that are part of our snake
 		private List<Segment> _segments;
 
+		// Shortcuts to get the head and tail
+		Segment _head { get { return _segments.Find(x => x.Id == 1); } }
+		Segment _tail { get { return _segments.Find(x => x.Id == _segments.Count); } }
+
 		// Public constructor
 		public Snake(int startX, int startY)
 		{
@@ -36,30 +40,28 @@ namespace Snake
 		// Adds a segment to the end of the snake
 		public void AddSegment()
 		{
-			// Find the position of the snake's tail
-			var tail = _segments.Find(x => x.Id == _segments.Count);
-			var xnew = tail.X;
-			var ynew = tail.Y;
+			var xnew = _tail.X;
+			var ynew = _tail.Y;
 
 			// Offset the next segment based on which direction the tail is moving
 			// i.e if the tail is moving down, we want the new segment to be one unit above the tail
-			switch (tail.Direction) {
+			switch (_tail.Direction) {
 				case Program.SnakeDirection.Left:
-					xnew = tail.X + 1;
+					xnew = _tail.X + 1;
 					break;
 				case Program.SnakeDirection.Right:
-					xnew = tail.X - 1;
+					xnew = _tail.X - 1;
 					break;
 				case Program.SnakeDirection.Up:
-					ynew = tail.Y + 1;
+					ynew = _tail.Y + 1;
 					break;
 				case Program.SnakeDirection.Down:
-					ynew = tail.Y - 1;
+					ynew = _tail.Y - 1;
 					break;
 			}
 
 			// Add the new segment one position behind the tail
-			_segments.Add(new Segment(){X = xnew, Y = ynew, Direction = tail.Direction, Id = tail.Id + 1});
+			_segments.Add(new Segment(){X = xnew, Y = ynew, Direction = _tail.Direction, Id = _tail.Id + 1});
 		}
 
 		// Moves the Snake one unit, with the new head going in the specified direction
@@ -69,10 +71,8 @@ namespace Snake
 			// in front of the current head and then updating all the other segments' ID so they don't lose
 			// track of their "position" in the snake
 
-			// Find the position of the snake's head
-			var head = _segments.Find(x => x.Id == 1);
-			var xnew = head.X;
-			var ynew = head.Y;
+			var xnew = _head.X;
+			var ynew = _head.Y;
 
 			// Offset one segment in front of the head based on its direction
 			// i.e if the head is moving down, we want the new segment to be one unit below the head
@@ -80,32 +80,32 @@ namespace Snake
 			// i.e if the snake is moving up and the player tries to move down, the snake will continue moving up
 			switch (direction) {
 				case Program.SnakeDirection.Left:
-					if (head.Direction == Program.SnakeDirection.Right) {
-						xnew = head.X + 1;
+					if (_head.Direction == Program.SnakeDirection.Right) {
+						xnew = _head.X + 1;
 						direction = Program.SnakeDirection.Right;
 					} else
-						xnew = head.X - 1;
+						xnew = _head.X - 1;
 					break;
 				case Program.SnakeDirection.Right:
-					if (head.Direction == Program.SnakeDirection.Left) {
-						xnew = head.X - 1;
+					if (_head.Direction == Program.SnakeDirection.Left) {
+						xnew = _head.X - 1;
 						direction = Program.SnakeDirection.Left;
 					} else
-						xnew = head.X + 1;
+						xnew = _head.X + 1;
 					break;
 				case Program.SnakeDirection.Up:
-					if (head.Direction == Program.SnakeDirection.Down) {
-						ynew = head.Y + 1;
+					if (_head.Direction == Program.SnakeDirection.Down) {
+						ynew = _head.Y + 1;
 						direction = Program.SnakeDirection.Down;
 					} else
-						ynew = head.Y - 1;
+						ynew = _head.Y - 1;
 					break;
 				case Program.SnakeDirection.Down:
-					if (head.Direction == Program.SnakeDirection.Up) {
-						ynew = head.Y - 1;
+					if (_head.Direction == Program.SnakeDirection.Up) {
+						ynew = _head.Y - 1;
 						direction = Program.SnakeDirection.Up;
 					} else
-						ynew = head.Y + 1;
+						ynew = _head.Y + 1;
 					break;
 			}
 
@@ -136,27 +136,21 @@ namespace Snake
 		// Returns true if this snake is colliding with a barrier object or wall
 		public bool DetectCollision(IEnumerable<Barrier> barriers)
 		{
-			// Find the position of the head
-			var head = _segments.Find(x => x.Id == 1);
-
 			// First check to see if this snake is colliding with one of its own segments
-			if (_segments.Any(seg => head.X == seg.X && head.Y == seg.Y && head.Id != seg.Id)) {
+			if (_segments.Any(seg => _head.X == seg.X && _head.Y == seg.Y && _head.Id != seg.Id)) {
 				return true;
 			}
 
 			// Then check to see if we are on a wall
 			// TODO: Change this from "magic numbers" to use information from the caller
-			return barriers.Any(bar => bar.CollisionAtPoint(head.X, head.Y));
+			return barriers.Any(bar => bar.CollisionAtPoint(_head.X, _head.Y));
 		}
 
 		// Returns true if this snake is colliding with the given food object
 		public bool DetectFood(Food food)
 		{
-			// Find the position of the head
-			var head = _segments.Find(x => x.Id == 1);
-
 			// Return true if the head is occupying the same space as the food
-			return food.ExistsAtPoint(head.X, head.Y);
+			return food.ExistsAtPoint(_head.X, _head.Y);
 		}
 
 		// Returns true if a snake segment exists at the given coords
