@@ -150,9 +150,12 @@ namespace Snake
 				// Each barrier has a number of segments between 3 and maximum
 				var thisNumSegments = _rand.Next(3, MaxBarrierSegments + 1);
 
-				// Generate a starting point for the barrier
-				var startX = _rand.Next(1, Width - 2);
-				var startY = _rand.Next(1, Height - 2);
+				// Generate a starting point for the barrier that doesn't overlap the snake
+				int startX, startY;
+				do {
+					startX = _rand.Next(1, Width - 2);
+					startY = _rand.Next(1, Height - 2);
+				} while (_snake.ExistsAtPoint(startX, startY));
 
 				// Add a segment at the starting point
 				thisBarrier.AddSegment(startX, startY);
@@ -163,7 +166,7 @@ namespace Snake
 					int randX, randY;
 
 					// Keep generating points until we get one that doesn't conflict with
-					// an existing segment
+					// an existing segment or overlap the snake
 					do {
 						// Get a random segment from the current barrier (starts with the starting point)
 						// where coords[0] = x and coords[1] = y
@@ -176,7 +179,8 @@ namespace Snake
 						// Add that random number to each of the base coords
 						randX += coords[0];
 						randY += coords[1];
-					} while (_barriers.Any(bar => bar.CollisionAtPoint(randX, randY)));
+					} while (_barriers.Any(bar => bar.CollisionAtPoint(randX, randY)) ||
+							 _snake.ExistsAtPoint(randX, randY));
 					
 
 					// Add a new segment at the generated point
