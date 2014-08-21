@@ -88,8 +88,9 @@ namespace Snake
 			int randY;
 			int barCount = 0;
 
-			// Get random coordinates until we find one that is not occupied already
-			// OR where the food is surrounded on 3 or more sides by barriers
+			// Get random coordinates until we find one that is NOT occupied already
+			// AND where the food is NOT surrounded on 3 or more sides by barriers
+			// AND where the barrier is NOT within the first 10 spaces of the snake
 			do {
 				randX = _rand.Next(Width - 2) + 1;
 				randY = _rand.Next(Height - 2) + 1;
@@ -108,9 +109,8 @@ namespace Snake
 			_food.SetPosition(randX, randY);
 		}
 
-		// Adds the four walls to the list of barriers, as well as "NumBarriers"
-		// randomized barriers somewhere in the game bounds
-		static void CreateRandomBarriers()
+		// Adds the four walls to the list of barriers
+		static void CreateOuterWalls()
 		{
 			// Generate top wall
 			var topWall = new Barrier();
@@ -139,9 +139,13 @@ namespace Snake
 				rightWall.AddSegment(Width - 1, i);
 			}
 			_barriers.Add(rightWall);
+		}
 
+		// Adds a number of randomized barriers to the list of barriers
+		static void CreateRandomBarriers(int num)
+		{
 			// Generate "NumBarriers" random barriers
-			for (var i = 0; i < NumBarriers; i++) {
+			for (var i = 0; i < num; i++) {
 				var thisBarrier = new Barrier();
 
 				// Each barrier has a number of segments between 3 and maximum
@@ -274,7 +278,8 @@ namespace Snake
 			var userInputLoop = new Thread(new ThreadStart(GetUserInput));
 			
 			// Create walls and barriers for the game
-			CreateRandomBarriers();
+			CreateOuterWalls();
+			CreateRandomBarriers(NumBarriers);
 
 			// draw static objects including walls and barriers
 			PreRender();
